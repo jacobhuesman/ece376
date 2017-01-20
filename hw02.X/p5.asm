@@ -40,8 +40,9 @@
 ; -- Variables --
 I0 equ 0
 I1 equ 1
-RUN equ 2
-CURRENT_WAIT equ 3
+I2 equ 2
+RUN equ 3
+CURRENT_WAIT equ 4
 ;SEC equ 3
 ;SEC100 equ 4
 
@@ -80,8 +81,9 @@ ForLoop:
   movlw 100
   cpfslt SEC100
 	  return
-  movlw 0
-  movwf CURRENT_WAIT
+  clrf CURRENT_WAIT
+  clrf I1
+  clrf I2
   call Wait
   incf SEC100,F
   goto ForLoop
@@ -90,20 +92,31 @@ ForLoop:
 ;; Using recursive strategy
 ;; Each time Wait is called it calls another instance of itself.
 Wait:
-  
   incf CURRENT_WAIT
-  movlw 1
-  cpfslt CURRENT_WAIT
+
+  movlw 2
+  cpfseq CURRENT_WAIT
     call Wait
   
+
+  
+  movlw 2
+  cpfslt CURRENT_WAIT
+    incf I2,F
+  cpfseq CURRENT_WAIT
+    incf I1,F
+  cpfseq CURRENT_WAIT
+    clrf I2
+  
+  decf CURRENT_WAIT
+
   movlw 100
   cpfslt I1
     return
-  incf I1,F
-  decf CURRENT_WAIT
-  goto Wait
-    
+  cpfslt I2
+    return
 
+  goto Wait
 
 
  end
