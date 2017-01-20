@@ -36,77 +36,43 @@
     
 #define SEC PORTC
 #define SEC100 PORTD
-#define I INDF0
-#define IL FSR0L
 
 ; -- Variables --
 I0 equ 0
 I1 equ 1
 I2 equ 2
-I3 equ 3
-I4 equ 4
-RUN equ 5
+RUN equ 3
+CURRENT_WAIT equ 4
+;SEC equ 3
+;SEC100 equ 4
 
 ; --- Main Routine ---
 Main:
   call Init
-  call WaitToRun
+  call Loop
  
 ; --- Subroutines ---
 Init:
   clrf I0
   clrf I1
-  clrf I2
-  clrf I3
-  clrf I4
-  clrf TRISB
   clrf TRISC
   clrf TRISD
   clrf FSR0L
   clrf FSR0H
   clrf INDF0
-  clrf SEC
-  clrf SEC100
-  clrf RUN
-  movlw 1  ; Setting to 1 until button implementation is finished
-  movwf RUN
+  movlw 5
+  movwf I0
+  movlw 2
+  movwf INDF0
   return
-
-WaitToRun:
-  movlw 1
-  cpfseq RUN
-    goto WaitToRun
-  call Counter
-
-Counter:
-  clrf SEC100
-  clrf IL
-  clrf I0
-  call CounterMs
-  incf SEC,F
-  goto Counter
-
-
-;; Using recursive strategy
-CounterMs:
+  
+Loop:
   movf I0,W
-  movwf SEC100
-  incf IL
-
-  movlw 3
-  cpfseq IL
-    call CounterMs
-  clrf I
+  movwf PORTD
+  movf INDF0,W
+  movwf PORTC
+  goto Loop
   
-  decf IL,F
-
-  incf I,F
-  
-  movlw 100
-  cpfslt I
-    return
-
-  goto CounterMs
 
 
  end
