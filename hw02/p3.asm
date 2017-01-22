@@ -1,42 +1,51 @@
-;; --- Pseudo Code ---
+;; --- Homework #2 Part 3 ---
+;;
+;; Convert the following C code to assembler:
+;;
+;; unsigned char A, i;
+;; 
 ;; while(1) {
 ;;   A = A + 1; 
 ;;   for (i=0; i<10; i++);
 ;; } 
   
-;; --- Implementation ---
+; --- Configuration ---
 #include <p18f4620.inc>
  org 0x800
     
-; -- Variables --
-;; unsigned char A, i;
-A equ 0
-I equ 1
+; unsigned char A, i;
+#define A0 PORTC
+#define I0 PORTD
 
 ; --- Main Routine ---
 Main:
-    call WhileLoop
+  call Init
+  call WhileLoop
  
 ; --- Subroutines ---
-;; while(1) {
-WhileLoop:
-  ;; A = A + 1; 
-  incf A,F
-  ;; for (i=0; i<10; i++);
-  clrf I
-  goto ForLoop
-  ;; }
+Init:
+  clrf TRISC
+  clrf TRISD
+
+WhileLoop:  ; while(1) {
+  ; A = A + 1; 
+  incf A0,F
+  
+  ; for (i=0; i<10; i++);
+  clrf I0
+  call ForLoop
+  
+  ; }
   goto WhileLoop
 
 ForLoop:
-    movlw 10
-    cpfslt I
-	return
-    INCF I,F
-    goto ForLoop
+  movlw 10
+  cpfslt I0
+	  return
+
+  incf I0,F
+
+  goto ForLoop
   
-    
+Shutdown: 
  end
-    
-    
-    
