@@ -1,7 +1,7 @@
-;; --- p5.asm ---
-;; This program solves the following problem:
+;; --- Homework #2 Part 5 ---
 ;;
 ;; Write an assembler program which corresponds to a stopwatch
+;;
 ;; RUN = 1: Start the stopwatch
 ;; Sec100   8-bit number. 1/100 counter
 ;; Sec      8-bit number. seconds
@@ -29,8 +29,10 @@
 ;; Notes:
 ;; One clock cycle = 100ns
 ;; Each instruction takes 1 clock cycle to complete
+;;
   
-;; --- Configuration ---
+
+; --- Configuration ---
 #include <p18f4620.inc>
  org 0x800
     
@@ -39,7 +41,6 @@
 #define I INDF0
 #define IL FSR0L
 
-; -- Variables --
 I0 equ 0
 I1 equ 1
 I2 equ 2
@@ -47,11 +48,14 @@ I3 equ 3
 I4 equ 4
 RUN equ 5
 
+
 ; --- Main Routine ---
 Main:
   call Init
   call WaitToRun
+  call Counter
  
+
 ; --- Subroutines ---
 Init:
   clrf I0
@@ -76,7 +80,7 @@ WaitToRun:
   movlw 1
   cpfseq RUN
     goto WaitToRun
-  call Counter
+  return
 
 Counter:
   clrf SEC100

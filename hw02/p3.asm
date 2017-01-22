@@ -9,7 +9,8 @@
 ;;   for (i=0; i<10; i++);
 ;; } 
 ;;
-  
+ 
+ 
 ; --- Configuration ---
 #include <p18f4620.inc>
  org 0x800
@@ -18,11 +19,13 @@
 #define A0 PORTC
 #define I0 PORTD
 
+
 ; --- Main Routine ---
 Main:
   call Init
   call WhileLoop
  
+
 ; --- Subroutines ---
 Init:
   clrf TRISC
