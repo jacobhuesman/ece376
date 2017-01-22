@@ -16,14 +16,18 @@ file="${1%.*}"
 #make -f nbproject/Makefile-default.mk SUBPROJECTS= .build-conf
 
 # Generate HEX Code
-"/opt/microchip/mplabx/v3.51/mpasmx/mpasmx" -q -p18f4620 -u -rDEC -o$file.o $file.asm 
-"/opt/microchip/mplabx/v3.51/mpasmx/mplink"    -p18f4620 $file.o   
+echo MPASMX
+"/opt/microchip/mplabx/v3.51/mpasmx/mpasmx" -p18f4620 -rDEC -o$file.o $file.asm 
+cat $file.ERR
+echo 
+
+mv $file.LST debug/$file.LST 
+"/opt/microchip/mplabx/v3.51/mpasmx/mplink" -p18f4620 $file.o   
 
 # Cleanup
 mv -f a.hex $file.hex 2> /dev/null
 rm -f *.out 2> /dev/null
 rm -f *.ERR 2> /dev/null
-rm -f *.LST 2> /dev/null
 rm -f *.COD 2> /dev/null
 rm -f ___* 2> /dev/null
 rm "$file.o" 2> /dev/null
