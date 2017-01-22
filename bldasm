@@ -16,8 +16,8 @@ file="${1%.*}"
 #make -f nbproject/Makefile-default.mk SUBPROJECTS= .build-conf
 
 # Generate HEX Code
-"/opt/microchip/mplabx/v3.51/mpasmx/mpasmx" -q -p18f4620 -u -rDEC -o\build/$file.o $file.asm 
-"/opt/microchip/mplabx/v3.51/mpasmx/mplink"    -p18f4620 build/$file.o   
+"/opt/microchip/mplabx/v3.51/mpasmx/mpasmx" -q -p18f4620 -u -rDEC -o$file.o $file.asm 
+"/opt/microchip/mplabx/v3.51/mpasmx/mplink"    -p18f4620 $file.o   
 
 # Cleanup
 mv -f a.hex $file.hex 2> /dev/null
@@ -26,6 +26,7 @@ rm -f *.ERR 2> /dev/null
 rm -f *.LST 2> /dev/null
 rm -f *.COD 2> /dev/null
 rm -f ___* 2> /dev/null
+rm "$file.o" 2> /dev/null
 
 # Set up device using same settings as used by screen
 stty -F $dev 406:0:8bd:8a30:3:1c:7f:8:4:2:64:0:11:13:1a:0:12:f:17:16:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0 
