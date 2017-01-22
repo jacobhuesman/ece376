@@ -8,6 +8,7 @@
 ;;   A = A + 1; 
 ;;   for (i=0; i<10; i++);
 ;; } 
+;;
   
 ; --- Configuration ---
 #include <p18f4620.inc>
