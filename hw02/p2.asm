@@ -52,7 +52,7 @@ Run:
   addwf B0,W
   movwf C0
   movf A1,W
-  addwfc B1,W
+  addwfc B1,1
   movwf C1
   
   goto Run

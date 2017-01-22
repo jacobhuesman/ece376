@@ -40,23 +40,13 @@
 #include <p18f4620.inc>
     
 #define SEC PORTC
-#define SEC100 PORTD
-#define I INDF0
-#define IL FSR0L
-#define LCnts INDF1
-#define LCntsI FSR1L
+#define MSEC PORTD
 
 TRUE equ 1
 FALSE equ 0
 
-I0 equ 0
-I1 equ 1
-I2 equ 2
-I3 equ 3
-LCnts0 equ 4
-LCnts1 equ 5
-LCnts2 equ 6
-LCnts3 equ 7
+C0 equ 0
+C1 equ 1
 RUN equ 8
 
 
@@ -70,46 +60,16 @@ Main:
 
 ; --- Subroutines ---
 Init:
-  clrf TRISB
   clrf TRISC
   clrf TRISD
 
-  ; 4x1 Array I
-  clrf I0
-  clrf I1
-  clrf I2
-  clrf I3
-
-  ; 4x1 Array LCnts
-  ; Equation to determine coefficients:
-  ; 1 = 2u * (1 + 100(1 + L3(1 + L4)))
-  ; Current coefficient selection leads to an 
-  ; error of .05 seconds every 256 seconds
-  movlw 0
-  movwf LCnts0
-  movlw 100
-  movwf LCnts1
-  movlw 238
-  movwf LCnts2
-  movlw 20
-  movwf LCnts3
-  
+  clrf C0
+  clrf C1
   clrf SEC
-  clrf SEC100
+  clrf MSEC
   clrf RUN
 
-  ; Set pointer 0 to address 0x000-0x003
-  clrf FSR0L
-  clrf FSR0H
-  clrf INDF0
-  
-  ; Set ponter 1 to address 0x004-0x007 
-  clrf FSR1L
-  clrf FSR1H
-  movlw LCnts0
-  movwf LCntsI
-
-  movlw TRUE  ; Setting to 1 until button implementation is finished
+  movlw TRUE
   movwf RUN
 
   return
@@ -121,46 +81,55 @@ WaitToRun:
   return
 
 Counter:
-  ; --- Overall clock cycles: 18 ---
-  ; Uses recursion
-
-  ; Display the value of I0 on PORTD
-  ; Clock cycles: 4
-  movf I0,W
-  movwf SEC
-  movf I1,W
-  movwf SEC100
+  ; Clock cycles: 99994 = 17 * 5882
+  call Wait1ms
   
-  ; If the current level is less than 2, call CounterMs
-  ; Clock cycles: 10
-  incf IL
-  incf LCntsI
-  
+  ; Clock cycles: 6
   If0:
-    movlw 4  ; Current level + 1
-    cpfslt IL
+    movlw 99
+    cpfseq MSEC
       goto EndIf0
-    call Counter
+    clrf MSEC
+    incf SEC,F
   EndIf0:
-  
-  clrf I
-  decf IL,F
-  decf LCntsI
-  incf I,F
+  incf MSEC
 
-  ; Burn some cycles
-  ; Clock cycles: 2
-  nop
-  nop
-  
-  ; If current level has been iterated over x # of times, return
-  ; Clock cycles: 4
+  goto Counter
+    
+Wait1ms:
+  ; Check to see if we've incremented X # of times.
+  ; Clock Cycles 17
+  ; Loops: 5882 = 0x16FA
   If1:
-    movf LCnts,W
-    cpfseq I
-      goto Counter  ; Else
-    return
+    movlw 0x16
+    cpfseq C1
+      goto EndIf1
+    If2:
+      movlw 0xFA
+      cpfseq C0
+        goto EndIf2
+      clrf C0
+      clrf C1
+      call Wait6CC
+      nop  ; 1 nop plus the first 2 clock cycles needed to call Wait1ms
+      return
   EndIf1:
+    goto EndIf2
+  EndIf2:
+
+  ; Increment low byte and add carry
+  incf C0
+  movlw 0
+  addwfc C1,1
+
+  call Wait6CC
+
+  goto Wait1ms
+
+Wait6CC:
+  nop
+  nop
+  return
 
 Shutdown:
   end

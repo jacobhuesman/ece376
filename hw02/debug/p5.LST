@@ -1,4 +1,4 @@
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE  1
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE  1
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
@@ -55,150 +55,115 @@ LOC  OBJECT CODE     LINE SOURCE TEXT
                       00009 
                       01440         LIST
                       00041     
-                      00042 #define SEC PORTC
-                      00043 #define SEC100 PORTD
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE  2
+                      00042 #define C1 PORTB
+                      00043 #define SEC PORTC
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE  2
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-                      00044 #define I INDF0
-                      00045 #define IL FSR0L
-                      00046 #define LCnts INDF1
-                      00047 #define LCntsI FSR1L
+                      00044 #define MSEC PORTD
+                      00045 
+  00000001            00046 TRUE equ 1
+  00000000            00047 FALSE equ 0
                       00048 
-  00000001            00049 TRUE equ 1
-  00000000            00050 FALSE equ 0
-                      00051 
-  00000000            00052 I0 equ 0
-  00000001            00053 I1 equ 1
-  00000002            00054 I2 equ 2
-  00000003            00055 I3 equ 3
-  00000004            00056 LCnts0 equ 4
-  00000005            00057 LCnts1 equ 5
-  00000006            00058 LCnts2 equ 6
-  00000007            00059 LCnts3 equ 7
-  00000008            00060 RUN equ 8
+  00000000            00049 C0 equ 0
+                      00050 ;C1 equ 1
+  00000008            00051 RUN equ 8
+                      00052 
+                      00053 
+                      00054 ; --- Main Routine ---
+000800                00055 Main:
+000800 EC?? F???      00056   call Init
+000804 EC?? F???      00057   call WaitToRun
+000808 EC?? F???      00058   call Counter
+00080C EF?? F???      00059   goto Main
+                      00060  
                       00061 
-                      00062 
-                      00063 ; --- Main Routine ---
-000800                00064 Main:
-000800 EC?? F???      00065   call Init
-000804 EC?? F???      00066   call WaitToRun
-000808 EC?? F???      00067   call Counter
-00080C EF?? F???      00068   goto Main
-                      00069  
-                      00070 
-                      00071 ; --- Subroutines ---
-000810                00072 Init:
-000810 6A93           00073   clrf TRISB
-000812 6A94           00074   clrf TRISC
-000814 6A95           00075   clrf TRISD
+                      00062 ; --- Subroutines ---
+000810                00063 Init:
+000810 6A93           00064   clrf TRISB
+000812 6A94           00065   clrf TRISC
+000814 6A95           00066   clrf TRISD
+                      00067 
+000816 6A00           00068   clrf C0
+000818 6A81           00069   clrf C1
+00081A 6A82           00070   clrf SEC
+00081C 6A83           00071   clrf MSEC
+00081E 6A08           00072   clrf RUN
+                      00073 
+000820 0E01           00074   movlw TRUE  ; Setting to 1 until button implementation is finished
+000822 6E08           00075   movwf RUN
                       00076 
-                      00077   ; 4x1 Array I
-000816 6A00           00078   clrf I0
-000818 6A01           00079   clrf I1
-00081A 6A02           00080   clrf I2
-00081C 6A03           00081   clrf I3
-                      00082 
-                      00083   ; 4x1 Array LCnts
-                      00084   ; Equation to determine coefficients:
-                      00085   ; 1 = 2u * (1 + 100(1 + L3(1 + L4)))
-                      00086   ; Current coefficient selection leads to an 
-                      00087   ; error of .05 seconds every 256 seconds
-00081E 0E00           00088   movlw 0
-000820 6E04           00089   movwf LCnts0
-000822 0E64           00090   movlw 100
-000824 6E05           00091   movwf LCnts1
-000826 0EEE           00092   movlw 238
-000828 6E06           00093   movwf LCnts2
-00082A 0E14           00094   movlw 20
-00082C 6E07           00095   movwf LCnts3
-                      00096   
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE  3
+000824 0012           00077   return
+                      00078 
+000826                00079 WaitToRun:
+000826 0E01           00080   movlw TRUE
+000828 6208           00081   cpfseq RUN
+00082A EF?? F???      00082     goto WaitToRun
+00082E 0012           00083   return
+                      00084 
+000830                00085 Counter:
+                      00086   ; Clock cycles: 99994 = 17 * 5882
+000830 EC?? F???      00087   call Wait1ms
+                      00088   
+                      00089   ; Clock cycles: 6
+000834                00090   If0:
+000834 0E63           00091     movlw 99
+000836 6283           00092     cpfseq MSEC
+000838 EF?? F???      00093       goto EndIf0
+00083C 6A83           00094     clrf MSEC
+00083E 2A82           00095     incf SEC,F
+000840                00096   EndIf0:
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE  3
 
 
 LOC  OBJECT CODE     LINE SOURCE TEXT
   VALUE
 
-00082E 6A82           00097   clrf SEC
-000830 6A83           00098   clrf SEC100
-000832 6A08           00099   clrf RUN
-                      00100 
-                      00101   ; Set pointer 0 to address 0x000-0x003
-000834 6AE9           00102   clrf FSR0L
-000836 6AEA           00103   clrf FSR0H
-000838 6AEF           00104   clrf INDF0
-                      00105   
-                      00106   ; Set ponter 1 to address 0x004-0x007 
-00083A 6AE1           00107   clrf FSR1L
-00083C 6AE2           00108   clrf FSR1H
-00083E 0E04           00109   movlw LCnts0
-000840 6EE1           00110   movwf LCntsI
-                      00111 
-000842 0E01           00112   movlw TRUE  ; Setting to 1 until button implementation is finished
-000844 6E08           00113   movwf RUN
-                      00114 
-000846 0012           00115   return
-                      00116 
-000848                00117 WaitToRun:
-000848 0E01           00118   movlw TRUE
-00084A 6208           00119   cpfseq RUN
-00084C EF?? F???      00120     goto WaitToRun
-000850 0012           00121   return
-                      00122 
-000852                00123 Counter:
-                      00124   ; --- Overall clock cycles: 18 ---
-                      00125   ; Uses recursion
+000840 2A83           00097   incf MSEC
+                      00098 
+000842 EF?? F???      00099   goto Counter
+                      00100     
+000846                00101 Wait1ms:
+                      00102   ; Check to see if we've incremented X # of times.
+                      00103   ; Clock Cycles 17
+                      00104   ; Loops: 5882 = 0x16FA
+000846                00105   If1:
+000846 0E16           00106     movlw 0x16
+000848 6281           00107     cpfseq C1
+00084A EF?? F???      00108       goto EndIf1
+00084E                00109     If2:
+00084E 0EFA           00110       movlw 0xFA
+000850 6200           00111       cpfseq C0
+000852 EF?? F???      00112         goto EndIf2
+000856 6A00           00113       clrf C0
+000858 6A81           00114       clrf C1
+00085A EC?? F???      00115       call Wait6CC
+00085E 0000           00116       nop  ; 1 nop plus the first 2 clock cycles needed to call Wait1ms
+000860 0012           00117       return
+000862                00118   EndIf1:
+000862 EF?? F???      00119     goto EndIf2
+000866                00120   EndIf2:
+                      00121 
+                      00122   ; Increment low byte and add carry
+000866 2A00           00123   incf C0
+000868 0E00           00124   movlw 0
+00086A 2281           00125   addwfc C1,1
                       00126 
-                      00127   ; Display the value of I0 on PORTD
-                      00128   ; Clock cycles: 4
-000852 5000           00129   movf I0,W
-000854 6E82           00130   movwf SEC
-000856 5001           00131   movf I1,W
-000858 6E83           00132   movwf SEC100
-                      00133   
-                      00134   ; If the current level is less than 2, call CounterMs
-                      00135   ; Clock cycles: 10
-00085A 2AE9           00136   incf IL
-00085C 2AE1           00137   incf LCntsI
-                      00138   
-00085E                00139   If0:
-00085E 0E04           00140     movlw 4  ; Current level + 1
-000860 60E9           00141     cpfslt IL
-000862 EF?? F???      00142       goto EndIf0
-000866 EC?? F???      00143     call Counter
-00086A                00144   EndIf0:
-                      00145   
-00086A 6AEF           00146   clrf I
-00086C 06E9           00147   decf IL,F
-00086E 06E1           00148   decf LCntsI
-000870 2AEF           00149   incf I,F
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE  4
-
-
-LOC  OBJECT CODE     LINE SOURCE TEXT
-  VALUE
-
-                      00150 
-                      00151   ; Burn some cycles
-                      00152   ; Clock cycles: 2
-000872 0000           00153   nop
-000874 0000           00154   nop
-                      00155   
-                      00156   ; If current level has been iterated over x # of times, return
-                      00157   ; Clock cycles: 4
-000876                00158   If1:
-000876 50E7           00159     movf LCnts,W
-000878 62EF           00160     cpfseq I
-00087A EF?? F???      00161       goto Counter  ; Else
-00087E 0012           00162     return
-000880                00163   EndIf1:
-                      00164 
-000880                00165 Shutdown:
-                      00166   end
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE  5
+00086C EC?? F???      00127   call Wait6CC
+                      00128 
+000870 EF?? F???      00129   goto Wait1ms
+                      00130 
+000874                00131 Wait6CC:
+000874 0000           00132   nop
+000876 0000           00133   nop
+000878 0012           00134   return
+                      00135 
+00087A                00136 Shutdown:
+                      00137   end
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE  4
 
 
 SYMBOL TABLE
@@ -252,17 +217,19 @@ BRG16                             00000003
 BRGH                              00000002
 BSR                               00000FE0
 C                                 00000000
+C0                                00000000
+C1                                PORTB
 C1INV                             00000004
 C1OUT                             00000006
 C2INV                             00000005
-C2OUT                             00000007
-CCP1                              00000002
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE  6
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE  5
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+C2OUT                             00000007
+CCP1                              00000002
 CCP1CON                           00000FBD
 CCP1IE                            00000002
 CCP1IF                            00000002
@@ -314,18 +281,18 @@ CVR0                              00000000
 CVR1                              00000001
 CVR2                              00000002
 CVR3                              00000003
-CVRCON                            00000FB5
-CVREN                             00000007
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE  7
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE  6
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+CVRCON                            00000FB5
+CVREN                             00000007
 CVROE                             00000006
 CVRR                              00000005
 CVRSS                             00000004
-Counter                           00000852
+Counter                           00000830
 D                                 00000005
 DC                                00000001
 DC1B0                             00000004
@@ -354,8 +321,9 @@ EEIE                              00000004
 EEIF                              00000004
 EEIP                              00000004
 EEPGD                             00000007
-EndIf0                            0000086A
-EndIf1                            00000880
+EndIf0                            00000840
+EndIf1                            00000862
+EndIf2                            00000866
 FALSE                             00000000
 FAST                              00000001
 FERR                              00000002
@@ -372,15 +340,15 @@ FSR2L                             00000FD9
 GCEN                              00000007
 GIE                               00000007
 GIEH                              00000007
-GIEL                              00000006
-GIE_GIEH                          00000007
-GO                                00000001
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE  8
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE  7
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
+GIEL                              00000006
+GIE_GIEH                          00000007
+GO                                00000001
 GO_DONE                           00000001
 GO_NOT_DONE                       00000001
 HLVDCON                           00000FD2
@@ -393,15 +361,9 @@ HLVDL0                            00000000
 HLVDL1                            00000001
 HLVDL2                            00000002
 HLVDL3                            00000003
-I                                 INDF0
-I0                                00000000
-I1                                00000001
-I2                                00000002
-I3                                00000003
 IBF                               00000007
 IBOV                              00000005
 IDLEN                             00000007
-IL                                FSR0L
 INDF0                             00000FEF
 INDF1                             00000FE7
 INDF2                             00000FDF
@@ -434,20 +396,21 @@ INTSRC                            00000007
 IOFS                              00000002
 IPEN                              00000007
 IPR1                              00000F9F
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE  9
+IPR2                              00000FA2
+IRCF0                             00000004
+IRCF1                             00000005
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE  8
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
-IPR2                              00000FA2
-IRCF0                             00000004
-IRCF1                             00000005
 IRCF2                             00000006
 IRVST                             00000005
 IVRST                             00000005
-If0                               0000085E
-If1                               00000876
+If0                               00000834
+If1                               00000846
+If2                               0000084E
 Init                              00000810
 KBI0                              00000004
 KBI1                              00000005
@@ -493,20 +456,14 @@ LATE                              00000F8D
 LATE0                             00000000
 LATE1                             00000001
 LATE2                             00000002
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE 10
+LVDCON                            00000FD2
+LVDEN                             00000004
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE  9
 
 
 SYMBOL TABLE
   LABEL                             VALUE 
 
-LCnts                             INDF1
-LCnts0                            00000004
-LCnts1                            00000005
-LCnts2                            00000006
-LCnts3                            00000007
-LCntsI                            FSR1L
-LVDCON                            00000FD2
-LVDEN                             00000004
 LVDIE                             00000002
 LVDIF                             00000002
 LVDIN                             00000005
@@ -520,6 +477,7 @@ LVV1                              00000001
 LVV2                              00000002
 LVV3                              00000003
 MCLR                              00000003
+MSEC                              PORTD
 Main                              00000800
 N                                 00000004
 NOT_A                             00000005
@@ -552,12 +510,6 @@ OV                                00000003
 P                                 00000004
 P1B                               00000005
 P1C                               00000006
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE 11
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 P1D                               00000007
 P1M0                              00000006
 P1M1                              00000007
@@ -565,6 +517,12 @@ PC                                00000FF9
 PCFG0                             00000000
 PCFG1                             00000001
 PCFG2                             00000002
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE 10
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 PCFG3                             00000003
 PCL                               00000FF9
 PCLATH                            00000FFA
@@ -611,12 +569,6 @@ PROD                              00000FF3
 PRODH                             00000FF4
 PRODL                             00000FF3
 PRSEN                             00000007
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE 12
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 PSA                               00000003
 PSP0                              00000000
 PSP1                              00000001
@@ -624,6 +576,12 @@ PSP2                              00000002
 PSP3                              00000003
 PSP4                              00000004
 PSP5                              00000005
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE 11
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 PSP6                              00000006
 PSP7                              00000007
 PSPIE                             00000007
@@ -670,12 +628,6 @@ RCIE                              00000005
 RCIF                              00000005
 RCIP                              00000005
 RCMT                              00000006
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE 13
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 RCON                              00000FD0
 RCREG                             00000FAE
 RCSTA                             00000FAB
@@ -683,6 +635,12 @@ RD                                00000000
 RD0                               00000000
 RD1                               00000001
 RD16                              00000007
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE 12
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 RD2                               00000002
 RD3                               00000003
 RD4                               00000004
@@ -714,7 +672,6 @@ SDA                               00000004
 SDI                               00000004
 SDO                               00000005
 SEC                               PORTC
-SEC100                            PORTD
 SEN                               00000000
 SENDB                             00000003
 SMP                               00000007
@@ -729,12 +686,6 @@ SPEN                              00000007
 SREN                              00000005
 SS                                00000005
 SSPADD                            00000FC8
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE 14
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 SSPBUF                            00000FC9
 SSPCON1                           00000FC6
 SSPCON2                           00000FC5
@@ -743,6 +694,12 @@ SSPIE                             00000003
 SSPIF                             00000003
 SSPIP                             00000003
 SSPM0                             00000000
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE 13
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 SSPM1                             00000001
 SSPM2                             00000002
 SSPM3                             00000003
@@ -761,7 +718,7 @@ STKUNF                            00000006
 SWDTE                             00000000
 SWDTEN                            00000000
 SYNC                              00000004
-Shutdown                          00000880
+Shutdown                          0000087A
 T016BIT                           00000006
 T08BIT                            00000006
 T0CKI                             00000004
@@ -788,12 +745,6 @@ T2CKPS1                           00000001
 T2CON                             00000FCA
 T2OUTPS0                          00000003
 T2OUTPS1                          00000004
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE 15
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 T2OUTPS2                          00000005
 T2OUTPS3                          00000006
 T3CCP1                            00000003
@@ -802,6 +753,12 @@ T3CKPS0                           00000004
 T3CKPS1                           00000005
 T3CON                             00000FB1
 T3SYNC                            00000002
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE 14
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 TABLAT                            00000FF5
 TBLPTR                            00000FF6
 TBLPTRH                           00000FF7
@@ -847,12 +804,6 @@ TRISA2                            00000002
 TRISA3                            00000003
 TRISA4                            00000004
 TRISA5                            00000005
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE 16
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 TRISA6                            00000006
 TRISA7                            00000007
 TRISB                             00000F93
@@ -861,6 +812,12 @@ TRISB1                            00000001
 TRISB2                            00000002
 TRISB3                            00000003
 TRISB4                            00000004
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE 15
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 TRISB5                            00000005
 TRISB6                            00000006
 TRISB7                            00000007
@@ -906,12 +863,6 @@ TXSTA                             00000FAC
 UA                                00000001
 VCFG0                             00000004
 VCFG1                             00000005
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE 17
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 VDIRMAG                           00000007
 VPP                               00000003
 W                                 00000000
@@ -920,9 +871,17 @@ WDTCON                            00000FD1
 WR                                00000001
 WREG                              00000FE8
 WREN                              00000002
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE 16
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 WRERR                             00000003
 WUE                               00000001
-WaitToRun                         00000848
+Wait1ms                           00000846
+Wait6CC                           00000874
+WaitToRun                         00000826
 Z                                 00000002
 _BOREN_NOSLP_2L                   000000FD
 _BOREN_OFF_2L                     000000F9
@@ -965,18 +924,18 @@ _EBTR0_OFF_7L                     000000FF
 _EBTR0_ON_7L                      000000FE
 _EBTR1_OFF_7L                     000000FF
 _EBTR1_ON_7L                      000000FD
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE 18
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 _EBTR2_OFF_7L                     000000FF
 _EBTR2_ON_7L                      000000FB
 _EBTR3_OFF_7L                     000000FF
 _EBTR3_ON_7L                      000000F7
 _EBTRB_OFF_7H                     000000FF
 _EBTRB_ON_7H                      000000BF
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE 17
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 _FCMEN_OFF_1H                     000000BF
 _FCMEN_ON_1H                      000000FF
 _IDLOC0                           00200000
@@ -1024,18 +983,18 @@ _WDTPS_32_2H                      000000EB
 _WDTPS_4096_2H                    000000F9
 _WDTPS_4_2H                       000000E5
 _WDTPS_512_2H                     000000F3
-MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  0:18:58         PAGE 19
-
-
-SYMBOL TABLE
-  LABEL                             VALUE 
-
 _WDTPS_64_2H                      000000ED
 _WDTPS_8192_2H                    000000FB
 _WDTPS_8_2H                       000000E7
 _WDT_OFF_2H                       000000FE
 _WDT_ON_2H                        000000FF
 _WRT0_OFF_6L                      000000FF
+MPASM 5.71  /HOME/JAKE/PROJECTS/ECE376/HW02/   1-22-2017  12:42:28         PAGE 18
+
+
+SYMBOL TABLE
+  LABEL                             VALUE 
+
 _WRT0_ON_6L                       000000FE
 _WRT1_OFF_6L                      000000FF
 _WRT1_ON_6L                       000000FD
@@ -1054,7 +1013,7 @@ _XINST_ON_4L                      000000FF
 __18F4620                         00000001
 
 Errors   :     0
-Warnings :     0 reported,     4 suppressed
+Warnings :     0 reported,     6 suppressed
 Messages :     0 reported,     0 suppressed
 
 
