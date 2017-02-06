@@ -30,7 +30,6 @@
 ;; 
 ;; Notes:
 ;; One clock cycle = 100ns
-;; Each instruction takes 1 clock cycle to complete
 ;;
   
 
@@ -62,33 +61,44 @@ Main:
 
 ; --- Subroutines ---
 Init:
-  clrf TRISC
-  clrf TRISD
+  movlw 0xFF
+  movwf TRISB ;PORTB is input
+  clrf TRISC  ;PORTC is output
+  clrf TRISD  ;PORTD is output
 
-  clrf C0
-  clrf C1
-  clrf SEC
-  clrf CSEC
-  clrf RUN
+  call Clear
+
+  movlw 15
+  movwf ADCON1  ;everyone is binary
 
   movlw TRUE
   movwf RUN
 
   return
 
-WaitToRun:
-  movlw TRUE
-  cpfseq RUN
-    goto WaitToRun
+Clear:
+  clrf C0
+  clrf C1
+  clrf SEC
+  clrf CSEC
+  clrf RUN
   return
 
+WaitToRun:
+  btfsc PORTB,2
+    call Clear
+  btfsc PORTB,0
+    return
+  goto WaitToRun
+
 Counter:
-  ; Clock cycles: 99994 = 17 * 5882
+  ; Clock cycles: 99992 = 29 * 3448
   call Wait1cs
-  
-  ; Clock cycles: 6
+  ; Clock cycles: 8
+  btfsc PORTB,1
+    call WaitToRun
   If0:
-    movlw 99
+    movlw 100
     cpfseq CSEC
       goto EndIf0
     clrf CSEC
@@ -100,19 +110,19 @@ Counter:
     
 Wait1cs:
   ; Check to see if we've incremented X # of times.
-  ; Clock Cycles 17
-  ; Loops: 5882 = 0x16FA
+  ; Clock Cycles 17 need 29
+  ; Loops: 3448 = 0x0D78
   If1:
-    movlw 0x16
+    movlw 0x0D
     cpfseq C1
       goto EndIf1
     If2:
-      movlw 0xFA
+      movlw 0x78
       cpfseq C0
         goto EndIf2
       clrf C0
       clrf C1
-      call Wait6CC
+      call Wait18CC
       nop  ; 1 nop plus the first 2 clock cycles needed to call Wait1cs
       return
   EndIf1:
@@ -124,13 +134,19 @@ Wait1cs:
   movlw 0
   addwfc C1,1
 
-  call Wait6CC
+  call Wait18CC
 
   goto Wait1cs
 
-Wait6CC:
+Wait7CC:
   nop
   nop
+  nop
+  return
+
+Wait18CC
+  call Wait7CC
+  call Wait7CC
   return
 
 Shutdown:
