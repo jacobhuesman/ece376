@@ -1,0 +1,39 @@
+#!/bin/bash
+
+# Configuration
+dev=/dev/ttyUSB0
+baud=9600
+
+if [ "$1" == "" ]; then
+  echo "Please enter file..."
+  exit
+fi
+
+# Remove suffix
+file="${1%.*}"
+
+# Remove last build
+rm -rf shit
+mkdir shit
+
+# Make the project (Only needed for C)
+"/opt/microchip/xc8/v1.41/bin/xc8" --pass1  --chip=18F4620 -Q -G  --double=24 --float=24 --emi=wordwrite --opt=+asm,+asmfile,-speed,+space,-debug,-local --addrqual=ignore --mode=free -P -N255 --warn=-3 --asmlist -DXPRJ_default=default  --summary=default,-psect,-class,+mem,-hex,-file --output=default,-inhx032 --runtime=default,+clear,+init,-keep,-no_startup,-download,+config,+clib,-plib   --output=-mcof,+elf:multilocs --stack=compiled:auto:auto:auto "--errformat=%f:%l: error: (%n) %s" "--warnformat=%f:%l: warning: (%n) %s" "--msgformat=%f:%l: advisory: (%n) %s"    -oshit/$file.p1  $file.c 
+
+"/opt/microchip/xc8/v1.41/bin/xc8"  --chip=18F4620 -G -mshit/$file.map  --double=24 --float=24 --emi=wordwrite --opt=+asm,+asmfile,-speed,+space,-debug,-local --addrqual=ignore --mode=free -P -N255 --warn=-3 --asmlist -DXPRJ_default=default  --summary=default,-psect,-class,+mem,-hex,-file --output=default,-inhx032 --runtime=default,+clear,+init,-keep,-no_startup,-download,+config,+clib,-plib --output=-mcof,+elf:multilocs --stack=compiled:auto:auto:auto "--errformat=%f:%l: error: (%n) %s" "--warnformat=%f:%l: warning: (%n) %s" "--msgformat=%f:%l: advisory: (%n) %s"      --memorysummary shit/memoryfile.xml -oshit/$file.elf  shit/$file.p1     
+echo 
+
+# Set up device using same settings as used by screen
+stty -F $dev 406:0:8bd:8a30:3:1c:7f:8:4:2:64:0:11:13:1a:0:12:f:17:16:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0:0 
+
+# Wait for reset button
+echo Waiting for reset button press...
+head -n 1 $dev | grep -qe ">"
+printf "\r" > $dev
+sleep 3
+cat "shit/$file.hex" > $dev
+
+# Delete hex file
+rm "shit/$file.hex"
+
+echo
+echo done!
