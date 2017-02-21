@@ -32,8 +32,5 @@ printf "\r" > $dev
 sleep 3
 cat "shit/$file.hex" > $dev
 
-# Delete hex file
-rm "shit/$file.hex"
-
 echo
 echo done!
