@@ -23,7 +23,9 @@ void lcd_out(unsigned long number) {
 }
 
 void main(void) {
+  TRISC = 0;
   TRISD = 0;
+  PORTC = 0;
   PORTD = 0;
   LCD_Init();
 
@@ -39,6 +41,6 @@ void main(void) {
   while(1) {
     LCD_Move(1,0);
     lcd_out(count++);
-    PORTDbits.RD0++;
+    PORTCbits.RC0++;
   }
 }
