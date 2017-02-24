@@ -10,7 +10,6 @@
 #define RB0 PORTBbits.RB0
 #define RB1 PORTBbits.RB1
 #define RB2 PORTBbits.RB2
-#define RC0 PORTCbits.RC0
 
 
 void wait(unsigned int time) {
@@ -19,8 +18,8 @@ void wait(unsigned int time) {
   }
 }
 
-void lcd_write_number(unsigned long number, unsigned char size, unsigned char decimal_index) {
-  unsigned char output[5];
+void lcd_write_number(unsigned long number, char size, char decimal_index) {
+  char output[5];
   
   for (int i=0; i<size; i++) {
     output[i] = number % 10;
@@ -35,18 +34,88 @@ void lcd_write_number(unsigned long number, unsigned char size, unsigned char de
   }
 }
 
-void lcd_write_string(unsigned char* output, unsigned char size) {
+void lcd_write_string(char* output, char size) {
   LCD_Move(1,0);
   for (unsigned char i=0; i<size; i++) {
     LCD_Write(output[i]);
   }
 }
 
+char get_key(void) {
+  char result, i;
+  result = 0xFF;
+  
+  PORTC = 4;
+  for (i=0; i<100; i++);
+  if (PORTC & 0b01000000) result = 1;
+  if (PORTC & 0b00100000) result = 4;
+  if (PORTC & 0b00010000) result = 7;
+  if (PORTC & 0b00001000) result = 10;
+  
+  PORTC = 2; 
+  for (i=0; i<100; i++);
+  if (PORTC & 0b01000000) result = 2;
+  if (PORTC & 0b00100000) result = 5;
+  if (PORTC & 0b00010000) result = 8;
+  if (PORTC & 0b00001000) result = 0;
+  
+  PORTC = 1;
+  for (i=0; i<100; i++);
+  if (PORTC & 0b01000000) result = 3;
+  if (PORTC & 0b00100000) result = 6;
+  if (PORTC & 0b00010000) result = 9;
+  if (PORTC & 0b00001000) result = 11;
+  if (PORTB & 0b00000001) result = 12;
+  if (PORTB & 0b00000010) result = 13;
+  if (PORTB & 0b00000100) result = 14;
+  if (PORTB & 0b00001000) result = 15;
+  if (PORTB & 0b00010000) result = 16;
+  PORTC = 0;
+  
+  return(result);
+}
+      
+char read_key(void) {
+  char x,y;
+  do {
+    x = get_key();
+  } while(x > 20);
+  do {
+    y = get_key();
+  } while(y < 20);
+  wait(100);  // debounce
+  return(x);
+}
+
+char read_string(void) {
+  // Start shit up
+  char temp1, temp2, letter;
+  temp1 = read_key();
+  
+  while (temp1 < 10){
+
+    letter = (temp1-1)*3 + 'a';
+    
+    LCD_Move(1,0);
+    LCD_Write(letter);
+    temp2 = read_key();
+    while (temp2 == temp1) {
+      LCD_Move(1,0);
+      LCD_Write(++letter);
+      temp2 = read_key();
+    }
+    
+    temp1 = temp2;
+  }
+
+  return letter;
+}
+
 void initialize(void) {
   // Set registers
   TRISA = 0;
   TRISB = 0xFF;
-  TRISC = 0;
+  TRISC = 0xF8;
   TRISD = 0;
   TRISE = 0;
   TRISA = 0;
@@ -65,60 +134,28 @@ void main(void)
 {
   initialize();
 
-  unsigned int hr, min, sec, run;
-  sec = 0;
-  min = 0;
-  hr  = 0;
-         
   // Send title to LCD
-  const unsigned char MSG0[16] = "caesar_cipher.c ";
+  const char MSG0[16] = "caesar_cipher.c ";
   LCD_Move(0,0);
   for (int i=0; i<20; i++) {
     LCD_Write(MSG0[i]);
   }
-  lcd_write_string("test",4);
+ 
+   
+  // Prompt user
+  //lcd_write_string("enter message", 13);
 
-  while(1);
 
-  /*
+  // States:
+  // - Displaying "Enter Message" and displaying input
+  //    - Cycle through letters
+  // - Displaying "Enter Key" and displaying input
+  // - Displaying on first line encrypted message and keys below it
   while (1) {
-    // Write values to LCD
-    LCD_Move(1,0);
-    lcd_out(hr,2,0);
-    LCD_Write(':');
-    lcd_out(min,2,0);
-    LCD_Write(':');
-    lcd_out(sec,3,1);
-    
-    // Update values
-    if (run == 1) {
-      if (sec == 600) {
-          min = min +1;
-          sec = 0;
-      }
-      if (min == 60){
-          hr  = hr + 1;
-          min = 0;
-      }
+    read_string();
 
-      sec++;
-      RC0++;
-      wait(100);
-    }
+  //if (temp < 10) LCD_Write(temp + '0');
 
-    // Manage input
-    if (RB0 == 1) {
-      run = 1;
-    }
-    if (RB1 == 1) {
-      run = 0;
-    }
-    if (RB2 == 1) {
-      hr  = 0;
-      min = 0;
-      sec = 0;
-    }
   }
-  */
 }
     
