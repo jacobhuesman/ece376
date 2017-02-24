@@ -100,26 +100,31 @@ void write_string(char* string) {
 void read_string(void) {
   // Start shit up
   char index, char1, char2, letter;
-  char string[16] = "                ";
+  char string[17] = "t               ";
   
   index = 0;
   char1 = read_key();
-  while (char1 < 10 && index < 16){
-    letter = (char1-1)*3 + 'a';
-    
-    LCD_Move(1,0);
-    LCD_Write(letter);
-    char2 = read_key();
-    while (char2 == char1) {
-      LCD_Move(1,0);
-      LCD_Write(++letter);
+  while (index < 16) {
+    if (char1 < 10) {
+      string[index] = (char1-1)*3 + 'a';
+      
+      write_string(string);
       char2 = read_key();
-    }
-    
-    string[index++] = letter;
-    char1 = char2;
-  }
+      while (char2 == char1) {
+        if ((string[index] - ((char1-1)*3 + 'a')) < 2) {
+          string[index]++;
+        } else {
+          string[index] = string[index] - 2;
+        }
+        write_string(string);
+        char2 = read_key();
+      }
+      
+      index++;
+      char1 = char2;
 
+    }
+  }
 }
 
 void initialize(void) {
