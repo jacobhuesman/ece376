@@ -1,6 +1,8 @@
 build/
 dist/
 nbproject/
+debug/
+Makefile
 shit/
 *.swp
 *.swo
