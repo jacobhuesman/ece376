@@ -87,28 +87,39 @@ char read_key(void) {
   return(x);
 }
 
-char read_string(void) {
-  // Start shit up
-  char temp1, temp2, letter;
-  temp1 = read_key();
-  
-  while (temp1 < 10){
 
-    letter = (temp1-1)*3 + 'a';
+// Courtesy of Marc Olberding
+void write_string(char* string) {
+  LCD_Move(0,0);
+  while (*string) {
+    LCD_Write(*(string++));
+  }
+}
+
+
+void read_string(void) {
+  // Start shit up
+  char index, char1, char2, letter;
+  char string[16] = "                ";
+  
+  index = 0;
+  char1 = read_key();
+  while (char1 < 10 && index < 16){
+    letter = (char1-1)*3 + 'a';
     
     LCD_Move(1,0);
     LCD_Write(letter);
-    temp2 = read_key();
-    while (temp2 == temp1) {
+    char2 = read_key();
+    while (char2 == char1) {
       LCD_Move(1,0);
       LCD_Write(++letter);
-      temp2 = read_key();
+      char2 = read_key();
     }
     
-    temp1 = temp2;
+    string[index++] = letter;
+    char1 = char2;
   }
 
-  return letter;
 }
 
 void initialize(void) {
@@ -135,11 +146,8 @@ void main(void)
   initialize();
 
   // Send title to LCD
-  const char MSG0[16] = "caesar_cipher.c ";
-  LCD_Move(0,0);
-  for (int i=0; i<20; i++) {
-    LCD_Write(MSG0[i]);
-  }
+  const char title[16] = "caesar_cipher.c";
+  write_string(title);
  
    
   // Prompt user
