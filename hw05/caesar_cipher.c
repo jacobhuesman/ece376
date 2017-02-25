@@ -69,7 +69,6 @@ char get_key(void) {
   if (PORTB & 0b00000010) result = 13;
   if (PORTB & 0b00000100) result = 14;
   if (PORTB & 0b00001000) result = 15;
-  if (PORTB & 0b00010000) result = 16;
   PORTC = 0;
   
   return(result);
@@ -89,26 +88,48 @@ char read_key(void) {
 
 
 // Courtesy of Marc Olberding
-void write_string(char* string) {
-  LCD_Move(0,0);
-  while (*string) {
-    LCD_Write(*(string++));
+void write_string(char* string, char row) {
+  LCD_Move(row,0);
+  char i = 0;
+  while (i++ < 16) {
+    if (*string) LCD_Write(*(string++));
+    else LCD_Write(' ');
+  }
+}
+
+void empty_string(char* string, char size) {
+  char i = 0;
+  while (i < size-1) {
+    string[i++] = ' ';
+  }
+  string[size-1] = 0;
+}
+
+void nullify(char* string, char size) {
+  char i = 0;
+  while (i < size) {
+    string[i] = 0;
+    i++;
   }
 }
 
 
-void read_string(void) {
+// Read a t3 encoded string
+void read_message(char* string) {
   // Start shit up
-  char index, char1, char2, letter;
-  char string[17] = "t               ";
-  
+  char index, char1, char2, letter, space;
+
+  write_string("Enter message:", 0);
+  PORTB = PORTB & 0b00001111;
+  empty_string(string, 17);
   index = 0;
+  space = 0;
   char1 = read_key();
   while (index < 16) {
     if (char1 < 10) {
       string[index] = (char1-1)*3 + 'a';
       
-      write_string(string);
+      write_string(string, 0);
       char2 = read_key();
       while (char2 == char1) {
         if ((string[index] - ((char1-1)*3 + 'a')) < 2) {
@@ -116,21 +137,85 @@ void read_string(void) {
         } else {
           string[index] = string[index] - 2;
         }
-        write_string(string);
+        write_string(string, 0);
         char2 = read_key();
       }
       
       index++;
       char1 = char2;
-
+      space = 0;
+    } else if (char1 < 12) {
+      if (char1 == 10) { // User pressed *
+        string[--index] = ' ';
+      } else if (char1 == 11) { // User pressed #
+        if (space == 0) {
+          space++;
+        } else {
+          index++;
+          space = 0;
+        }
+      }
+      write_string(string, 0);
+      char1 = read_key();
+    } else if (char1 < 16) {
+      if (char1 == 12) {
+        PORTB = PORTB | 0b10000000;
+        return;
+      }
     }
   }
+}
+
+char array_to_number(char* array) {
+  char index    = 15;
+  char number   = 0;
+  char position = 10;
+  while(!array[index]) index--;
+  if (array[index]) {
+    number = array[index--];
+  }
+  while(array[index]) {
+    number = array[index--] * position;
+    position = position * 10;
+  }
+  return number;
+}
+
+char read_passkey() {
+  // Start shit up
+  char index, char1, key;
+  char string[17];
+  char key_array[17];
+
+  write_string("Enter key:", 1);
+  PORTB = PORTB & 0b00001111;
+  
+  empty_string(string, 17);
+  nullify(key_array, 16);
+  index = 0;
+  key = 0;
+  
+  char1 = read_key();
+  while (index < 16) {
+    if (char1 < 10) {
+      string[index]      = char1 + '0';
+      key_array[index++] = char1; 
+      write_string(string, 1);
+      char1              = read_key();
+    } else if (char1 < 16) {
+      if (char1 == 12) {
+        PORTB = PORTB | 0b10000000;
+        break;
+      }
+    }
+  }
+  key = array_to_number(key_array);
 }
 
 void initialize(void) {
   // Set registers
   TRISA = 0;
-  TRISB = 0xFF;
+  TRISB = 0x0F;
   TRISC = 0xF8;
   TRISD = 0;
   TRISE = 0;
@@ -151,8 +236,9 @@ void main(void)
   initialize();
 
   // Send title to LCD
-  const char title[16] = "caesar_cipher.c";
-  write_string(title);
+  write_string("caesar_cipher.c", 0);
+  char message[17];
+  char key;
  
    
   // Prompt user
@@ -165,7 +251,15 @@ void main(void)
   // - Displaying "Enter Key" and displaying input
   // - Displaying on first line encrypted message and keys below it
   while (1) {
-    read_string();
+    read_message(message);
+    key = read_passkey();
+    
+    write_string("Hit key any key", 0);
+    write_string("to encrypt"     , 1);
+    read_key();
+
+
+
 
   //if (temp < 10) LCD_Write(temp + '0');
 
