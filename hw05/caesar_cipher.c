@@ -34,6 +34,20 @@ void lcd_write_number(unsigned long number, char size, char decimal_index) {
   }
 }
 
+void write_char(unsigned char number, char row) {
+  char output[3];
+  LCD_Move(row, 0);
+  
+  for (int i=0; i<3; i++) {
+    output[i] = number % 10;
+    number    = number / 10;
+  }
+
+  for (int i=3; i>0; i--) {
+    LCD_Write(output[i-1] + '0');
+  }
+}
+
 void lcd_write_string(char* output, char size) {
   LCD_Move(1,0);
   for (unsigned char i=0; i<size; i++) {
@@ -166,50 +180,56 @@ void read_message(char* string) {
   }
 }
 
-char array_to_number(char* array) {
-  char index    = 15;
-  char number   = 0;
-  char position = 10;
+// Assumes the array has at least one character in it
+unsigned char array_to_number(char* array) {
+  char index             = 3;
+  unsigned char number   = 0;
+  unsigned char position = 10;
   while(!array[index]) index--;
-  if (array[index]) {
-    number = array[index--];
-  }
-  while(array[index]) {
-    number = array[index--] * position;
-    position = position * 10;
-  }
+  number = array[index] - '0';
+  if (index > 0) {
+    index--;
+    while(index > 0) {
+      unsigned char test = (array[index] - '0') * position;
+      index--;
+      number = number + test;
+      position = position * 10;
+    }
+    unsigned char test = (array[index] - '0') * position;
+    number = number + test;
+  } 
   return number;
 }
 
-char read_passkey() {
+unsigned int read_passkey() {
   // Start shit up
-  char index, char1, key;
+  char index, char1;
+  unsigned int key;
   char string[17];
-  char key_array[17];
 
   write_string("Enter key:", 1);
   PORTB = PORTB & 0b00001111;
   
-  empty_string(string, 17);
-  nullify(key_array, 16);
+  nullify(string, 17);
   index = 0;
   key = 0;
   
   char1 = read_key();
   while (index < 16) {
     if (char1 < 10) {
-      string[index]      = char1 + '0';
-      key_array[index++] = char1; 
+      string[index++] = char1 + '0';
       write_string(string, 1);
-      char1              = read_key();
+      char1 = read_key();
     } else if (char1 < 16) {
       if (char1 == 12) {
         PORTB = PORTB | 0b10000000;
-        break;
+        key = array_to_number(string);
+        return key;
       }
     }
   }
-  key = array_to_number(key_array);
+  key = array_to_number(string);
+  return key;
 }
 
 void initialize(void) {
@@ -256,6 +276,11 @@ void main(void)
     
     write_string("Hit key any key", 0);
     write_string("to encrypt"     , 1);
+    read_key();
+
+    write_string(message, 0);
+    write_string(" "    , 1);
+    write_char(key, 1);
     read_key();
 
 
