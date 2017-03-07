@@ -1,11 +1,16 @@
+// 
+// Homework 6
+// Jacob Huesman, Nick Carlson
+//
+
+
+#include <pic18.h>
+
 
 // Global Variables
 unsigned char TABLE[4] = {1, 2, 4, 8};
 int DIR, SPEED, STEP, N, TIME;
 
-
-// Subroutine Declarations
-#include <pic18.h>
 
 // High-priority service. 
 // Called every 1ms. 
@@ -15,8 +20,6 @@ void interrupt IntServe(void) {
     TIME = TIME + 1;
     DIR = 1;
 
-    // 256 slowest speed
-    // 12 fastest speed
     if (PORTB > 136) {
       DIR = 1;
       SPEED = 255 - PORTB + 5;
@@ -26,7 +29,6 @@ void interrupt IntServe(void) {
     } else {
       SPEED = 0;
     }
-
 
     N = (N + 1) % SPEED;
     if (N == 0) {
@@ -39,20 +41,18 @@ void interrupt IntServe(void) {
   }
 }
 
-        
+
 unsigned int a2d_read(void) {
   unsigned int result;
   ADCON0 = 0x01; // Select channel 0, turn on, CLK/32
-  GODONE = 1; // Start conversions
+  GODONE = 1;    // Start conversions
   while(GODONE); // wait until done (approx 8us)
   return(ADRES); // and return the result
 }
 
-// Main Routine
 
 void main(void) {
-  int i;
-
+  // Initialize
   TRISA  = 0xFF;
   TRISB  = 0;
   TRISC  = 0;
@@ -66,8 +66,6 @@ void main(void) {
   DIR = 1;
   SPEED = 100;
 
-
-  // initialize Timer2
   T2CON = 0x4D; // A = 10 (0b1001) C = 4 (0b01)
   PR2 = 249;    // B = 250 (249)
   TMR2ON = 1;
@@ -75,6 +73,7 @@ void main(void) {
   PEIE = 1;
   GIE = 1;
 
+  // Read voltage across potentiometer
   while(1) {
     unsigned int result = a2d_read();
     PORTB = result / 4;
