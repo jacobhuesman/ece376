@@ -128,14 +128,13 @@ void nullify(char* string, char size) {
 }
 
 
-// Read a t3 encoded string
+// Read encoded string
 void read_message(char* string) {
-  // Start shit up
   char index, char1, char2, letter, space;
 
   write_string("Enter message:", 0);
   PORTB = PORTB & 0b00001111;
-  empty_string(string, 17);
+  nullify(string, 17);
   index = 0;
   space = 0;
   char1 = read_key();
@@ -176,6 +175,9 @@ void read_message(char* string) {
         PORTB = PORTB | 0b10000000;
         return;
       }
+      char1 = read_key();
+    } else {
+      char1 = read_key();
     }
   }
 }
@@ -202,7 +204,6 @@ unsigned char array_to_number(char* array) {
 }
 
 unsigned int read_passkey() {
-  // Start shit up
   char index, char1;
   unsigned int key;
   char string[17];
@@ -230,6 +231,28 @@ unsigned int read_passkey() {
   }
   key = array_to_number(string);
   return key;
+}
+
+char encrypt(char* message, char key) {
+  char letter;
+  while(*message) {
+    if (*message == ' ') {
+      letter = 26;
+    } else {
+      letter = *message - 'a';
+    }
+    letter = letter + key;
+    if (letter > 26) {
+      letter = letter - 27;
+    }
+    if (letter == 26) {
+      (*message) = ' ';
+    } else {
+      (*message) = letter + 'a';
+    }
+    message++;
+  }
+  return 27 - key;
 }
 
 void initialize(void) {
@@ -260,34 +283,28 @@ void main(void)
   char message[17];
   char key;
  
-   
-  // Prompt user
-  //lcd_write_string("enter message", 13);
-
-
   // States:
   // - Displaying "Enter Message" and displaying input
   //    - Cycle through letters
   // - Displaying "Enter Key" and displaying input
   // - Displaying on first line encrypted message and keys below it
   while (1) {
+    write_string("", 0);
+    write_string("", 1);
+    
     read_message(message);
     key = read_passkey();
     
     write_string("Hit key any key", 0);
     write_string("to encrypt"     , 1);
     read_key();
-
+    
+    key = encrypt(message, key);
     write_string(message, 0);
-    write_string(" "    , 1);
+    
+    write_string("", 1);
     write_char(key, 1);
     read_key();
-
-
-
-
-  //if (temp < 10) LCD_Write(temp + '0');
-
   }
 }
     
