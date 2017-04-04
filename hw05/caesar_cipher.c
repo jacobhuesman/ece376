@@ -262,7 +262,6 @@ void initialize(void) {
   TRISC = 0xF8;
   TRISD = 0;
   TRISE = 0;
-  TRISA = 0;
   PORTB = 0;
   PORTC = 0;
   PORTD = 0;
