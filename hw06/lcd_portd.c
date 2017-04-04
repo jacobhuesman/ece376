@@ -80,6 +80,3 @@ void LCD_Init(void)
    LCD_Inst(0x01);
    LCD_Inst(0x06);
 }
-
-   
-
