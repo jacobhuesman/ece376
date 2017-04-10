@@ -80,12 +80,9 @@ void main(void) {
 
   while(1) {
     unsigned int result = a2d_read();
-    if (result <= 64) {
-        N = 9000;
-    } else {
-       N = 10000 + result/3;
-    }
+    N = 9000 + result/3;
     LCD_Move(1,9);  LCD_Out(N, 4);
+    //LCD_Move(1,9); LCD_OUT(result, 4);
   }      
 }
 
