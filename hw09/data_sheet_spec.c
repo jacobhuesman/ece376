@@ -1,30 +1,28 @@
 #include <pic18.h>
-#include "lcd_portd.c"
 
 
 unsigned long int TIME, TIME0, TIME1, dT;
-unsigned char TRIG_START;
+unsigned char TRIG_START, TRIG_END;
 
-void LCD_Out(unsigned long int DATA, unsigned char N)
-{
-   unsigned char A[10], i;
-   
-   for (i=0; i<10; i++) {
-      A[i] = DATA % 10;
-      DATA = DATA / 10;
-   }
-   for (i=10; i>0; i--) {
-      if (i == N) LCD_Write('.');
-      LCD_Write(A[i-1] + '0');
-   }
+
+// Serial port stuff
+void SCI_Init(void) {
+  TRISC = TRISC | 0xC0;
+  TXIE = 0;
+  RCIE = 0;
+  BRGH = 1;
+  BRG16 = 1;
+  SYNC = 0;
+  SPBRG = 255;
+  TXSTA = 0x22;
+  RCSTA = 0x90;
 }
-
 
 
 
 void interrupt IntServe(void) {
   if (TMR0IF) {
-    TMR0       = -41666;
+    TMR0       = -37500;
     TMR3       = -100;
     TRIG_START = 1;
     RC3        = 1;
@@ -37,16 +35,6 @@ void interrupt IntServe(void) {
   } else if (TMR3IF) {
     TMR3       = -10000;
     TMR3IF     = 0;
-  }
-  if (CCP1IF) {
-    if (CCP1CON == 0x05) { // Capture rising edge
-      TMR1 = 0;            // Start timer
-      CCP1CON = 0x04;      // Set to capture falling edge
-    } else {               // Capture falling edge
-      dt = CCPR1 * 2;      // Counts every other clock cycle
-      CCP1CON = 0x04;      // Set to capture rising edge
-    }
-    CCP1IF = 0;
   }
 }
 
@@ -78,9 +66,10 @@ void main(void) {
   TIME = 0;
 
   // Timer0
-  // N = (41,666)(8) = 333,333 clocks (~30 Hz)
+  // According to the datasheet the HC-SR04 suggested measurement cycle is 60ms.
+  // N = (37500)(16) = 600,000 clocks (60 ms)
   T0CS = 0;
-  T0CON = 0x82; // PS = 8
+  T0CON = 0x83; // PS = 16
   TMR0ON = 1;
   TMR0IE = 1;
   TMR0IP = 1;
@@ -95,20 +84,21 @@ void main(void) {
   PEIE = 1; 
 
   // set up Timer1 for PS = 8
-  TMR1CS = 0;
-  T1CON = 0x91;
+  /*TMR1CS = 0;
+  T1CON = 0x81;
   TMR1ON = 1;
   TMR1IE = 1;
   TMR1IP = 1;
-  PEIE = 1;
-
-  // set up Capture1 to capture a rising edge
+  PEIE = 1;*/
+  // set up Capture1 for rising edges
+  /*TRISC2 = 1;
   CCP1CON = 0x05;
   CCP1IE = 1;
-  PEIE = 1;
+  PEIE = 1;*/
 
   // Initialize other stuff
   TRIG_START = 0;
+  TRIG_END   = 0;
 
   // turn on all interrupts
   GIE = 1;
@@ -119,7 +109,7 @@ void main(void) {
     mm = dT * 0.1715;   // units = 1/10 mm
     //Serial_Out(mm);
 
-    LCD_Move(0,0);  LCD_Out(dT, 7);
+    //LCD_Move(0,0);  LCD_Out(dT, 7);
     //LCD_Move(1,0);  LCD_Out(mm, 1);
   }
 }
