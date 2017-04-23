@@ -5,6 +5,39 @@
 unsigned long int TIME, TIME0, TIME1, dT;
 unsigned char TRIG_START;
 
+
+void interrupt IntServe(void) {
+  if (TMR0IF) {
+    TMR0       = -41666;
+    TMR3       = -100;
+    TRIG_START = 1;
+    RC3        = 1;
+    TMR0IF     = 0;
+  } else if (TMR3IF && TRIG_START) {
+    TMR3       = 0; // Interrupting every 100 clock cycles is excessive.
+    TRIG_START = 0;
+    TMR3IF     = 0;
+    RC3        = 0;
+  } else if (TMR3IF) {
+    TMR3       = -10000;
+    TMR3IF     = 0;
+  }
+  if (CCP1IF) {
+    if (CCP1CON == 0x05) { // Capture rising edge
+      CCP1CON = 0x04;      // Set to capture falling edge
+    } else {               // Capture falling edge
+      dT = CCPR1 * 2;      // Counts every fourth clock cycle, but we only want half the time.
+      CCP1CON = 0x05;      // Set to capture rising edge
+    }
+    TMR1   = 0;
+    CCP1IF = 0;
+  }
+  if (TMR1IF) {
+    TMR1   = 0;
+    TMR1IF = 0;
+  }
+}
+
 void LCD_Out(unsigned long int DATA, unsigned char N)
 {
    unsigned char A[10], i;
@@ -20,60 +53,17 @@ void LCD_Out(unsigned long int DATA, unsigned char N)
 }
 
 
-
-
-void interrupt IntServe(void) {
-  if (TMR0IF) {
-    TMR0       = -41666;
-    TMR3       = -100;
-    TRIG_START = 1;
-    RC3        = 1;
-    TMR0IF     = 0;
-  } else if (TMR3IF && TRIG_START) {
-    TMR3       = -10000; // Interrupting every 100 clock cycles is excessive.
-    TRIG_START = 0;
-    TMR3IF     = 0;
-    RC3        = 0;
-  } else if (TMR3IF) {
-    TMR3       = -10000;
-    TMR3IF     = 0;
-  }
-  if (CCP1IF) {
-    if (CCP1CON == 0x05) { // Capture rising edge
-      TMR1 = 0;            // Start timer
-      CCP1CON = 0x04;      // Set to capture falling edge
-    } else {               // Capture falling edge
-      dt = CCPR1 * 2;      // Counts every other clock cycle
-      CCP1CON = 0x04;      // Set to capture rising edge
-    }
-    CCP1IF = 0;
-  }
-}
-
-void Serial_Out(unsigned int DATA) {
-  unsigned char A[10], i;
-
-  for (i=0; i<10; i++) {
-    A[i] = DATA % 10;
-    DATA = DATA / 10;
-  }
-  for (i=10; i>0; i--) {
-    while(!TRMT); TXREG = A[i-1] + '0';
-  }
-  while(!TRMT); TXREG = 13;
-  while(!TRMT); TXREG = 10;
-}
-
-
-
 void main(void) {
-  unsigned int mm;
+  unsigned long d;
 
   TRISA = 0;
   TRISB = 0xFF;
   TRISC = 0x04;
   TRISD = 0;
   ADCON1 = 0x0F;
+
+  LCD_Init();
+  Wait_ms(100);
 
   TIME = 0;
 
@@ -85,6 +75,7 @@ void main(void) {
   TMR0IE = 1;
   TMR0IP = 1;
   PEIE = 1; 
+
   // Timer3
   // N = (100)(1) = 100 clocks (10 us)
   TMR3CS = 0;
@@ -94,9 +85,9 @@ void main(void) {
   TMR3IP = 1;
   PEIE = 1; 
 
-  // set up Timer1 for PS = 8
+  // set up Timer1 for PS = 4
   TMR1CS = 0;
-  T1CON = 0x91;
+  T1CON = 0xA1;
   TMR1ON = 1;
   TMR1IE = 1;
   TMR1IP = 1;
@@ -116,10 +107,9 @@ void main(void) {
   //SCI_Init();
 
   while(1) {
-    mm = dT * 0.1715;   // units = 1/10 mm
-    //Serial_Out(mm);
+    d = dT * 343;
 
-    LCD_Move(0,0);  LCD_Out(dT, 7);
-    //LCD_Move(1,0);  LCD_Out(mm, 1);
+    LCD_Move(0,0);  LCD_Out(dT, 1);
+    LCD_Move(1,0);  LCD_Out(d, 5);
   }
 }
