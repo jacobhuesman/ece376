@@ -118,8 +118,11 @@ void main(void) {
     //TOT = SUM / 60;
     //BAC = TOT * 42 / 12276;
     //BAC = 11.721 * TOT / 60 - 3.6;
-    Vout = ((5.0 / 1023.0 * TOT / 60.0) - 1.5) / 41.7 * 1000;
-    
+    if (TOT < 20) {
+      Vout = 0.0;
+    } else {
+      Vout = ((5.0 / 1023.0 * TOT / 60.0) - 1.5) / 41.7 * 1000;
+    }
     
     LCD_Move(0,11);  LCD_Out(COUNTDOWN, 0);
     LCD_Move(1,11);  LCD_Out(Vout, 4);
